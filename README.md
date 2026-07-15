@@ -46,7 +46,7 @@ Fill `.env.local` with the project URL and a publishable key. Never add a secret
 - [x] GitHub Pages workflow and lightweight PWA shell cache
 - [x] Unit tests and live RPC verification queries
 - [ ] Enable Anonymous Sign-Ins in Supabase Auth dashboard (dashboard-only switch)
-- [x] GitHub Pages auto-enablement and deployment workflow
+- [ ] In GitHub repository Settings → Pages, select **GitHub Actions** (one-time repository setting)
 
 ## Security model
 
