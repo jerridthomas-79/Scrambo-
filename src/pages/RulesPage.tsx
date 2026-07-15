@@ -1,0 +1,6 @@
+import { Link } from "react-router-dom";
+import { AppShell } from "../components/AppShell";
+
+export function RulesPage() {
+  return <AppShell compact><article className="rules"><p className="eyebrow">THE FAST VERSION</p><h1>How to play</h1><p className="rules__lead">Be the first player to empty your 30-card stockpile.</p><section><span>1</span><div><h2>Build together</h2><p>Play onto any of four shared piles in order from 1 through 12. A wild card becomes whatever number comes next.</p></div></section><section><span>2</span><div><h2>Use your cards</h2><p>On your turn, play from your five-card hand, the visible top of your stockpile, or the visible top of one of your discard piles.</p></div></section><section><span>3</span><div><h2>Keep going</h2><p>If you use every card in your hand, draw back to five and continue. Completed 1–12 piles clear automatically.</p></div></section><section><span>4</span><div><h2>End your turn</h2><p>When you are done building, place one hand card onto any personal discard pile. That passes play to your opponent.</p></div></section><section><span>★</span><div><h2>Win</h2><p>Play the last stockpile card and the game ends immediately. No final discard needed.</p></div></section><Link className="button button--primary" to="/">Got it</Link></article></AppShell>;
+}
