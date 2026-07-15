@@ -2,6 +2,8 @@
 
 Scram-Bo is a mobile-first, two-player browser card game with an original patio-night identity. The React frontend is hosted by GitHub Pages; Supabase owns identity, hidden cards, rules, transactions, and realtime state.
 
+The linked Supabase schema and authoritative game RPCs are applied and verified. The only dashboard step remaining is enabling anonymous sign-ins.
+
 ## Play
 
 Production URL: `https://jerridthomas-79.github.io/Scrambo-/`
