@@ -14,10 +14,11 @@ interface CardProps {
 
 export function Card({ card, hidden, selected, disabled, priority, small, allowEmpty, onClick, label }: CardProps) {
   const rank = card?.rank ?? "";
+  const colorClass = getCardColorClass(card?.rank);
   return (
     <button
       type="button"
-      className={`card ${hidden ? "card--back" : ""} ${rank === "WILD" ? "card--wild" : ""} ${selected ? "card--selected" : ""} ${priority ? "card--priority" : ""} ${small ? "card--small" : ""}`}
+      className={`card ${hidden ? "card--back" : ""} ${rank === "WILD" ? "card--wild" : ""} ${colorClass} ${selected ? "card--selected" : ""} ${priority ? "card--priority" : ""} ${small ? "card--small" : ""}`}
       disabled={disabled || (!card && !hidden && !allowEmpty)}
       onClick={onClick}
       aria-label={label ?? (hidden ? "Face-down card" : card ? `${rank} card` : "Empty card slot")}
@@ -35,4 +36,11 @@ function CardRank({ rank }: { rank: CardType["rank"] }) {
       <span className="card__corner card__corner--bottom">{rank === "WILD" ? "★" : rank}</span>
     </>
   );
+}
+
+function getCardColorClass(rank: CardType["rank"] | undefined): string {
+  if (typeof rank !== "number") return "";
+  if (rank <= 4) return "card--blue";
+  if (rank <= 8) return "card--green";
+  return "card--red";
 }
