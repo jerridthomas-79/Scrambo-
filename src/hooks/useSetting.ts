@@ -1,10 +1,16 @@
 import { useState } from "react";
 
-export function useSetting(key: string, fallback: boolean): [boolean, (value: boolean) => void] {
-  const [value, setValue] = useState(() => {
+type SettingValue = boolean | number;
+
+export function useSetting<T extends SettingValue>(key: string, fallback: T): [T, (value: T) => void] {
+  const [value, setValue] = useState<T>(() => {
     const stored = localStorage.getItem(key);
-    return stored === null ? fallback : stored === "true";
+    if (stored === null) return fallback;
+    if (typeof fallback === "boolean") return (stored === "true") as T;
+    const parsed = Number(stored);
+    return (Number.isFinite(parsed) ? parsed : fallback) as T;
   });
+
   return [value, (next) => {
     setValue(next);
     localStorage.setItem(key, String(next));
