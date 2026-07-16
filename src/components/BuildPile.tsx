@@ -14,9 +14,9 @@ export function BuildPile({ pile, index, legal, onClick }: { pile: PlayedCard[];
     >
       {top ? (
         <>
-          <span className="build-pile__corner">{top.printedRank === "WILD" ? "★" : top.resolvedRank}</span>
-          <b>{top.printedRank === "WILD" ? "SCRAM!" : top.resolvedRank}</b>
-          <span className="build-pile__corner build-pile__corner--bottom">{top.printedRank === "WILD" ? "★" : top.resolvedRank}</span>
+          <span className="build-pile__corner">{top.printedRank === "WILD" ? top.resolvedRank : top.resolvedRank}</span>
+          <b>{top.printedRank === "WILD" ? <><span>SCRAM!</span><strong>{top.resolvedRank}</strong></> : top.resolvedRank}</b>
+          <span className="build-pile__corner build-pile__corner--bottom">{top.resolvedRank}</span>
           <span className="build-pile__count">{pile.length} cards</span>
         </>
       ) : (
@@ -28,6 +28,6 @@ export function BuildPile({ pile, index, legal, onClick }: { pile: PlayedCard[];
 
 function getBuildColorClass(rank: number): string {
   if (rank <= 4) return "build-pile--blue";
-  if (rank <= 8) return "build-pile--green";
-  return "build-pile--red";
+  if (rank <= 8) return "build-pile--purple";
+  return "build-pile--pink";
 }
