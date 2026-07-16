@@ -9,7 +9,7 @@ interface AuthContextValue {
   profile: Profile | null;
   loading: boolean;
   error: string | null;
-  updateProfile: (screenName: string) => Promise<void>;
+  updateProfile: (screenName: string, avatar?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -32,7 +32,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
       .then(async (nextUser) => {
         if (!active) return;
         setUser(nextUser);
-        setProfile(await getProfile(nextUser.id));
+        const nextProfile = await getProfile(nextUser.id);
+        setProfile(nextProfile);
+        if (nextProfile?.avatar) localStorage.setItem("scrambo.profileAvatar", nextProfile.avatar);
       })
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Could not sign in."))
       .finally(() => setLoading(false));
@@ -60,9 +62,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
       profile,
       loading,
       error,
-      updateProfile: async (screenName) => {
+      updateProfile: async (screenName, avatar) => {
         if (!user) throw new Error("You are not signed in.");
-        const updated = await saveProfile(user.id, screenName);
+        const updated = await saveProfile(user.id, screenName, avatar ?? profile?.avatar ?? "🦥");
         setProfile(updated);
       },
     }),
