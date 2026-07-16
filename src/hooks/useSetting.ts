@@ -1,19 +1,24 @@
 import { useState } from "react";
 
-type SettingValue = boolean | number;
-
-export function useSetting<T extends SettingValue>(key: string, fallback: T): [T, (value: T) => void] {
-  const [value, setValue] = useState<T>(() => {
+export function useSetting(key: string, fallback: boolean): [boolean, (value: boolean) => void];
+export function useSetting(key: string, fallback: number): [number, (value: number) => void];
+export function useSetting(
+  key: string,
+  fallback: boolean | number,
+): [boolean | number, (value: never) => void] {
+  const [value, setValue] = useState<boolean | number>(() => {
     const stored = localStorage.getItem(key);
     if (stored === null) return fallback;
-    if (typeof fallback === "boolean") return (stored === "true") as T;
+    if (typeof fallback === "boolean") return stored === "true";
     const parsed = Number(stored);
-    return (Number.isFinite(parsed) ? parsed : fallback) as T;
+    return Number.isFinite(parsed) ? parsed : fallback;
   });
 
-  return [value, (next) => {
+  function update(next: boolean | number): void {
     setValue(next);
     localStorage.setItem(key, String(next));
     window.dispatchEvent(new CustomEvent("scrambo-setting", { detail: { key, value: next } }));
-  }];
+  }
+
+  return [value, update as (value: never) => void];
 }
