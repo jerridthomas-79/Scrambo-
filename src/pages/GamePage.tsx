@@ -117,6 +117,11 @@ function soundEnabled(): boolean {
   return localStorage.getItem("scrambo.soundEnabled") !== "false";
 }
 
+function soundVolume(): number {
+  const stored = Number(localStorage.getItem("scrambo.soundVolume") ?? 1);
+  return Number.isFinite(stored) ? Math.min(2, Math.max(.5, stored)) : 1;
+}
+
 function drawCountKey(gameId: string, userId: string): string {
   return `scrambo.lastHandCount.${gameId}.${userId}`;
 }
@@ -143,7 +148,7 @@ function playComeOnNow(): void {
   const utterance = new SpeechSynthesisUtterance("Come on now.");
   utterance.rate = .92;
   utterance.pitch = .82;
-  utterance.volume = .8;
+  utterance.volume = Math.min(1, .8 * soundVolume());
   window.speechSynthesis.speak(utterance);
 }
 
@@ -151,7 +156,7 @@ function playTones(tones: Array<[number, number, number]>, type: OscillatorType,
   try {
     const context = new AudioContext();
     const master = context.createGain();
-    master.gain.setValueAtTime(volume, context.currentTime);
+    master.gain.setValueAtTime(volume * soundVolume(), context.currentTime);
     master.connect(context.destination);
     let finalTime = context.currentTime;
     tones.forEach(([frequency, delay, duration]) => {
