@@ -45,8 +45,8 @@ Fill `.env.local` with the project URL and a publishable key. Never add a secret
 - [x] Mobile tap interaction, legal-target hints, active-player glow, and reconnect
 - [x] GitHub Pages workflow and lightweight PWA shell cache
 - [x] Unit tests and live RPC verification queries
-- [ ] Enable Anonymous Sign-Ins in Supabase Auth dashboard (dashboard-only switch)
-- [ ] In GitHub repository Settings → Pages, select **GitHub Actions** (one-time repository setting)
+- [x] Anonymous Sign-Ins enabled in Supabase Auth
+- [x] GitHub Pages source set to **GitHub Actions**
 
 ## Security model
 
