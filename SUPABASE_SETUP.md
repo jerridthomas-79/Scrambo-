@@ -1,6 +1,6 @@
 # Supabase setup
 
-The linked Supabase project is `avieoongmwrdmurpdart` in `us-west-2`.
+The linked Supabase project is `Scrambo` (`acmtawptpngrxhxvxevp`) in `ca-central-1`.
 
 ## One-time dashboard setting
 
