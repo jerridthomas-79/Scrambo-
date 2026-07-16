@@ -41,6 +41,6 @@ function CardRank({ rank }: { rank: CardType["rank"] }) {
 function getCardColorClass(rank: CardType["rank"] | undefined): string {
   if (typeof rank !== "number") return "";
   if (rank <= 4) return "card--blue";
-  if (rank <= 8) return "card--green";
-  return "card--red";
+  if (rank <= 8) return "card--purple";
+  return "card--pink";
 }
