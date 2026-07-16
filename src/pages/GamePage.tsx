@@ -28,21 +28,53 @@ export function GamePage() {
 
   useEffect(() => {
     const active = game?.activePlayerId ?? null;
-    if (active === user?.id && previousActivePlayer.current !== active) {
-      if (localStorage.getItem("scrambo.soundEnabled") !== "false") playTurnChime();
-      if (localStorage.getItem("scrambo.motionEnabled") !== "false") navigator.vibrate?.(45);
+    const previous = previousActivePlayer.current;
+    const isSoundEnabled = localStorage.getItem("scrambo.soundEnabled") !== "false";
+
+    if (previous === user?.id && active !== user?.id && game?.me.hand) {
+      localStorage.setItem(drawCountKey(game.gameId, user.id), String(game.me.hand.length));
     }
+
+    if (active === user?.id && previous !== active) {
+      if (isSoundEnabled) playTurnChime();
+      if (localStorage.getItem("scrambo.motionEnabled") !== "false") navigator.vibrate?.(45);
+
+      if (game && user) {
+        const storedHandCount = Number(localStorage.getItem(drawCountKey(game.gameId, user.id)));
+        if (Number.isFinite(storedHandCount) && storedHandCount >= 0 && storedHandCount <= 5) {
+          const cardsDrawn = 5 - storedHandCount;
+          const streakKey = oneCardStreakKey(game.gameId, user.id);
+          const previousStreak = Number(localStorage.getItem(streakKey) ?? 0);
+          const nextStreak = cardsDrawn === 1 ? previousStreak + 1 : 0;
+          localStorage.setItem(streakKey, String(nextStreak));
+          if (nextStreak >= 4 && isSoundEnabled) {
+            playComeOnNow();
+            localStorage.setItem(streakKey, "0");
+          }
+        }
+      }
+    }
+
     previousActivePlayer.current = active;
-  }, [game?.activePlayerId, user?.id]);
+  }, [game?.activePlayerId, game?.gameId, game?.me.hand, user]);
 
   const selectedCard = useMemo(() => findSelectedCard(game?.me, selected), [game?.me, selected]);
   const legalTargets = game && selectedCard ? legalBuildTargets(selectedCard, game.shared.buildPiles) : [];
   const myTurn = game?.activePlayerId === user?.id;
 
   async function moveToBuild(index: number) {
-    if (!game || !selected || !myTurn) return;
+    if (!game || !selected || !selectedCard || !myTurn) return;
+    const top = game.shared.buildPiles[index]?.at(-1);
+    const completesPile = (top?.resolvedRank ?? 0) + 1 === 12;
     setBusy(true); setError(null);
-    try { setGame(await playCard(game.gameId, selected, index, game.version)); setSelected(null); }
+    try {
+      setGame(await playCard(game.gameId, selected, index, game.version));
+      setSelected(null);
+      if (soundEnabled()) {
+        playCardSound();
+        if (completesPile) window.setTimeout(playCompletedPileSound, 90);
+      }
+    }
     catch (reason) { setError(reason instanceof Error ? reason.message : "That move did not work."); await refresh(); }
     finally { setBusy(false); }
   }
@@ -71,7 +103,7 @@ export function GamePage() {
 }
 
 function PlayerArea({ player, opponent = false, selected, setSelected, canAct = false, onDiscard }: { player: PlayerView; opponent?: boolean; selected?: CardSource | null; setSelected?: (source: CardSource) => void; canAct?: boolean; onDiscard?: (index: number) => Promise<void> }) {
-  return <section className={`player-area ${opponent ? "player-area--opponent" : ""}`}><div className="pile-wrap"><Card card={player.stockTop} hidden={!player.stockTop && player.stockCount > 0} selected={selected?.type === "stock"} disabled={opponent || !canAct} priority onClick={() => player.stockTop && setSelected?.({ type: "stock", cardId: player.stockTop.id })} label={`Stockpile top ${player.stockTop?.rank ?? "hidden"}. ${player.stockCount} cards remain.`} /><span className="pile-count">{player.stockCount}</span></div><div className="discard-row">{player.discardPiles.map((pile, index) => <div className="pile-wrap" key={index}><Card card={pile.top} selected={selected?.type === "discard" && selected.pileIndex === index} disabled={opponent || !canAct} allowEmpty={selected?.type === "hand" && canAct} small onClick={() => { if (selected?.type === "hand" && onDiscard) void onDiscard(index); else if (pile.top && setSelected) setSelected({ type: "discard", pileIndex: index, cardId: pile.top.id }); }} label={`Discard pile ${index + 1}. ${pile.top ? `Top card ${pile.top.rank}.` : "Empty."}`} /><span className="pile-count">{pile.count}</span></div>)}</div>{opponent && <span className="hand-count">{player.handCount} cards in hand</span>}</section>;
+  return <section className={`player-area ${opponent ? "player-area--opponent" : ""}`}><div className="pile-wrap"><Card card={player.stockTop} hidden={!player.stockTop && player.stockCount > 0} selected={selected?.type === "stock"} disabled={opponent || !canAct} priority onClick={() => player.stockTop && setSelected?.({ type: "stock", cardId: player.stockTop.id })} label={`Stockpile top ${player.stockTop?.rank ?? "hidden"}. ${player.stockCount} cards remain.`} /><span className="pile-count">{player.stockCount}</span></div><div className="discard-row">{player.discardPiles.map((pile, index) => <div className={`pile-wrap discard-stack discard-stack--${Math.min(pile.count, 4)}`} key={index}><Card card={pile.top} selected={selected?.type === "discard" && selected.pileIndex === index} disabled={opponent || !canAct} allowEmpty={selected?.type === "hand" && canAct} small onClick={() => { if (selected?.type === "hand" && onDiscard) void onDiscard(index); else if (pile.top && setSelected) setSelected({ type: "discard", pileIndex: index, cardId: pile.top.id }); }} label={`Discard pile ${index + 1}. ${pile.top ? `Top card ${pile.top.rank}.` : "Empty."}`} /><span className="pile-count">{pile.count}</span></div>)}</div>{opponent && <span className="hand-count">{player.handCount} cards in hand</span>}</section>;
 }
 
 function findSelectedCard(player: PlayerView | undefined, selected: CardSource | null): CardType | null {
@@ -81,18 +113,62 @@ function findSelectedCard(player: PlayerView | undefined, selected: CardSource |
   return player.discardPiles[selected.pileIndex]?.top?.id === selected.cardId ? player.discardPiles[selected.pileIndex]?.top ?? null : null;
 }
 
+function soundEnabled(): boolean {
+  return localStorage.getItem("scrambo.soundEnabled") !== "false";
+}
+
+function drawCountKey(gameId: string, userId: string): string {
+  return `scrambo.lastHandCount.${gameId}.${userId}`;
+}
+
+function oneCardStreakKey(gameId: string, userId: string): string {
+  return `scrambo.oneCardDrawStreak.${gameId}.${userId}`;
+}
+
 function playTurnChime(): void {
+  playTones([[620, 0, .12], [790, .11, .12], [980, .22, .18]], "sine", .045);
+}
+
+function playCardSound(): void {
+  playTones([[330, 0, .05], [510, .045, .09]], "triangle", .04);
+}
+
+function playCompletedPileSound(): void {
+  playTones([[760, 0, .12], [610, .08, .14], [430, .17, .2]], "sine", .055);
+}
+
+function playComeOnNow(): void {
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance("Come on now.");
+  utterance.rate = .92;
+  utterance.pitch = .82;
+  utterance.volume = .8;
+  window.speechSynthesis.speak(utterance);
+}
+
+function playTones(tones: Array<[number, number, number]>, type: OscillatorType, volume: number): void {
   try {
     const context = new AudioContext();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.frequency.setValueAtTime(740, context.currentTime);
-    gain.gain.setValueAtTime(0.045, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.18);
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.18);
-    oscillator.addEventListener("ended", () => void context.close());
+    const master = context.createGain();
+    master.gain.setValueAtTime(volume, context.currentTime);
+    master.connect(context.destination);
+    let finalTime = context.currentTime;
+    tones.forEach(([frequency, delay, duration]) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const start = context.currentTime + delay;
+      const end = start + duration;
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, start);
+      gain.gain.setValueAtTime(1, start);
+      gain.gain.exponentialRampToValueAtTime(.001, end);
+      oscillator.connect(gain).connect(master);
+      oscillator.start(start);
+      oscillator.stop(end);
+      finalTime = Math.max(finalTime, end);
+    });
+    window.setTimeout(() => void context.close(), Math.max(250, (finalTime - context.currentTime) * 1000 + 80));
   } catch {
     // Browsers may block audio until the first gesture; gameplay continues silently.
   }
