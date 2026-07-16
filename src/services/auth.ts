@@ -19,16 +19,17 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   return data as Profile | null;
 }
 
-export async function saveProfile(userId: string, screenName: string): Promise<Profile> {
+export async function saveProfile(userId: string, screenName: string, avatar = "🦥"): Promise<Profile> {
   const errorMessage = validateScreenName(screenName);
   if (errorMessage) throw new Error(errorMessage);
   const cleanName = screenName.trim();
   const { data, error } = await supabase
     .from("profiles")
-    .upsert({ id: userId, screen_name: cleanName })
+    .upsert({ id: userId, screen_name: cleanName, avatar })
     .select("*")
     .single();
   if (error) throw error;
   localStorage.setItem("scrambo.profileName", cleanName);
+  localStorage.setItem("scrambo.profileAvatar", avatar);
   return data as Profile;
 }
