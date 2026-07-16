@@ -2,10 +2,7 @@ import { useState } from "react";
 
 export function useSetting(key: string, fallback: boolean): [boolean, (value: boolean) => void];
 export function useSetting(key: string, fallback: number): [number, (value: number) => void];
-export function useSetting(
-  key: string,
-  fallback: boolean | number,
-): [boolean | number, (value: never) => void] {
+export function useSetting(key: string, fallback: boolean | number) {
   const [value, setValue] = useState<boolean | number>(() => {
     const stored = localStorage.getItem(key);
     if (stored === null) return fallback;
@@ -20,5 +17,5 @@ export function useSetting(
     window.dispatchEvent(new CustomEvent("scrambo-setting", { detail: { key, value: next } }));
   }
 
-  return [value, update as (value: never) => void];
+  return [value, update] as const;
 }
