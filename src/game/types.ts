@@ -20,6 +20,7 @@ export interface VisiblePile {
 export interface PlayerView {
   userId: string;
   screenName: string;
+  avatar?: string | null;
   seat: 1 | 2;
   isReady: boolean;
   isConnected: boolean;
@@ -65,6 +66,7 @@ export type CardSource =
 export interface Profile {
   id: string;
   screen_name: string;
+  avatar: string;
   created_at: string;
   updated_at: string;
 }
